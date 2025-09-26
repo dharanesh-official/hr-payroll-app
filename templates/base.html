@@ -41,6 +41,15 @@
       {% endif %}
 
       <main class="main-content">
+        {% if current_user.is_authenticated %}
+        <header class="mobile-header">
+            <button id="menu-toggle" class="hamburger-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <h3 class="mobile-title">HR Pro</h3>
+        </header>
+        {% endif %}
+
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             <div class="flash-container">
@@ -54,5 +63,13 @@
         {% block content %}{% endblock %}
       </main>
     </div>
+
+    {% if current_user.is_authenticated %}
+    <script>
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('sidebar-open');
+        });
+    </script>
+    {% endif %}
   </body>
 </html>

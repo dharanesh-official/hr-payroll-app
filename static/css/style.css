@@ -1,10 +1,10 @@
-/* --- CSS Variables for Easy Theme Management --- */
+/* --- CSS Variables --- */
 :root {
-    --color-red-primary: #D90429; /* A strong, professional red */
+    --color-red-primary: #D90429;
     --color-red-secondary: #EF233C;
     --color-dark: #2B2D42;
     --color-gray: #8D99AE;
-    --color-light: #EDF2F4; /* Off-white background */
+    --color-light: #EDF2F4;
     --color-white: #FFFFFF;
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     --border-radius: 12px;
@@ -12,7 +12,7 @@
 
 /* --- General Body and Font Styles --- */
 body {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     background-color: var(--color-light);
     color: var(--color-dark);
@@ -24,269 +24,142 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
-/* --- App Layout (Sidebar + Main Content) --- */
+/* --- MOBILE FIRST STYLES --- */
+
 .app-container {
     display: flex;
+    flex-direction: column; /* Stacks sidebar and content on mobile */
     min-height: 100vh;
 }
 
-.main-content {
-    flex-grow: 1;
-    padding: 2rem;
-    overflow-y: auto;
-}
-
-/* --- Sidebar Navigation --- */
+/* Sidebar is hidden by default off-screen */
 .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
     width: 260px;
     background-color: var(--color-dark);
     color: var(--color-light);
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
-    transition: width 0.3s ease;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+}
+.sidebar-open {
+    transform: translateX(0);
 }
 
-.sidebar-header {
-    padding: 1.5rem;
-    text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+.sidebar-header h3 { color: var(--color-white); margin: 0; font-weight: 700; }
+.sidebar-header { padding: 1.5rem; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.sidebar-nav { flex-grow: 1; padding: 1rem 0; }
+.nav-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--color-gray); text-decoration: none; transition: all 0.3s ease; gap: 1rem; font-weight: 500; }
+.nav-link:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--color-white); }
+.nav-link.active { background-color: var(--color-red-primary); color: var(--color-white); font-weight: 600; }
+.nav-link svg { flex-shrink: 0; }
+.sidebar-footer { padding: 1rem 0; border-top: 1px solid rgba(255, 255, 255, 0.1); }
 
-.sidebar-header h3 {
-    color: var(--color-white);
-    margin: 0;
-    font-weight: 700;
-}
-
-.sidebar-nav {
-    flex-grow: 1;
-    padding: 1rem 0;
-}
-
-.nav-link {
+/* Mobile Header (Hamburger Menu) */
+.mobile-header {
     display: flex;
     align-items: center;
-    padding: 1rem 1.5rem;
-    color: var(--color-gray);
-    text-decoration: none;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    gap: 1rem;
-    font-weight: 500;
-}
-
-.nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--color-white);
-}
-
-.nav-link.active {
-    background-color: var(--color-red-primary);
-    color: var(--color-white);
-    font-weight: 600;
-}
-
-.nav-link svg {
-    flex-shrink: 0;
-}
-
-.sidebar-footer {
-    padding: 1rem 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* --- Card Style for Main Content --- */
-.card {
     background-color: var(--color-white);
-    padding: 2rem;
-    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
     box-shadow: var(--shadow);
-    margin-top: 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 500;
 }
-
-/* --- Forms, Buttons, and Inputs --- */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    display: block;
-}
-
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="date"],
-input[type="number"],
-select,
-textarea {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--color-red-primary);
-    box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.15);
-}
-
-button {
-    background-color: var(--color-red-primary);
-    color: var(--color-white);
-    padding: 0.8rem 1.5rem;
+.hamburger-btn {
+    background: none;
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
+    padding: 0.5rem;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    align-self: flex-start; /* Don't stretch buttons */
+}
+.hamburger-btn svg { color: var(--color-dark); }
+.mobile-title {
+    margin: 0;
+    margin-left: 1rem;
+    font-size: 1.2rem;
 }
 
-button:hover {
-    background-color: var(--color-red-secondary);
-    transform: translateY(-2px);
+/* Main content takes full width on mobile */
+.main-content {
+    flex-grow: 1;
+    padding: 1rem;
 }
 
+/* Responsive Tables */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+.table-responsive table {
+    min-width: 600px; /* Ensure table has a minimum width before scrolling */
+}
+
+/* --- TABLET AND DESKTOP STYLES --- */
+@media (min-width: 768px) {
+    .app-container {
+        flex-direction: row; /* Side-by-side layout on larger screens */
+    }
+
+    /* Sidebar becomes visible and static */
+    .sidebar {
+        position: static;
+        transform: translateX(0);
+    }
+
+    .main-content {
+        padding: 2rem;
+    }
+
+    /* Hide the mobile header */
+    .mobile-header {
+        display: none;
+    }
+}
+
+/* --- ALL OTHER STYLES (Cards, Forms, Buttons, etc.) --- */
+.card { background-color: var(--color-white); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); margin-top: 1.5rem; }
+form { display: flex; flex-direction: column; gap: 1.5rem; }
+label { font-weight: 500; margin-bottom: 0.5rem; display: block; }
+input[type="text"], input[type="password"], input[type="email"], input[type="date"], input[type="number"], select, textarea { width: 100%; padding: 0.75rem 1rem; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: 'Poppins', sans-serif; transition: all 0.3s ease; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-red-primary); box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.15); }
+button { background-color: var(--color-red-primary); color: var(--color-white); padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; align-self: flex-start; }
+button:hover { background-color: var(--color-red-secondary); transform: translateY(-2px); }
 button.approve { background-color: #2a9d8f; }
 button.approve:hover { background-color: #268a7e; }
 button.decline { background-color: #e76f51; }
 button.decline:hover { background-color: #e25d3a; }
-
-/* --- Tables --- */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1.5rem;
-    background: var(--color-white);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    overflow: hidden; /* For border-radius to work on table */
-}
-
-th, td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--color-light);
-}
-
-th {
-    background-color: #f8f9fa; /* Lighter off-white for headers */
-    font-weight: 600;
-}
-
-tr:last-child td {
-    border-bottom: none;
-}
-
-tr:hover {
-    background-color: #fafafa;
-}
-
-/* --- Login Page Specific Styles --- */
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    padding: 2rem;
-}
-.login-form {
-    width: 100%;
-    max-width: 400px;
-    background: var(--color-white);
-    padding: 2.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-}
-.login-form h2 {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-.login-form button {
-    width: 100%;
-}
-
-/* --- Flash Messages --- */
-.flash-container {
-    position: absolute;
-    top: 1.5rem;
-    right: 1.5rem;
-    z-index: 1000;
-}
-.alert {
-    padding: 1rem 1.5rem;
-    margin-bottom: 1rem;
-    border-radius: 8px;
-    color: var(--color-white);
-    box-shadow: var(--shadow);
-    min-width: 250px;
-}
+table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; background: var(--color-white); border-radius: var(--border-radius); box-shadow: var(--shadow); overflow: hidden; }
+th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--color-light); }
+th { background-color: #f8f9fa; font-weight: 600; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background-color: #fafafa; }
+.login-container { display: flex; justify-content: center; align-items: center; width: 100%; padding: 2rem; }
+.login-form { width: 100%; max-width: 400px; background: var(--color-white); padding: 2.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); }
+.login-form h2 { text-align: center; margin-bottom: 2rem; }
+.login-form button { width: 100%; }
+.flash-container { position: fixed; top: 1.5rem; right: 1.5rem; z-index: 1100; }
+.alert { padding: 1rem 1.5rem; margin-bottom: 1rem; border-radius: 8px; color: var(--color-white); box-shadow: var(--shadow); min-width: 250px; }
 .alert-error { background-color: var(--color-red-primary); }
 .alert-success { background-color: #2a9d8f; }
-
-/* --- Other Components (Stat Cards, Filter, etc.) --- */
-.stat-card-container { display: flex; gap: 1.5rem; margin: 1.5rem 0; }
-.stat-card { background-color: var(--color-white); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); flex-grow: 1; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.stat-card-container { display: flex; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+.stat-card { background-color: var(--color-white); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow); flex-grow: 1; transition: all 0.3s ease; flex-basis: 200px; }
 .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
 .stat-card h4 { margin-top: 0; color: var(--color-gray); }
 .stat-card .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--color-red-primary); margin: 0; text-align: right; }
 .filter-container { background-color: var(--color-white); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; box-shadow: var(--shadow); }
-.filter-container form { display: flex; gap: 1rem; align-items: center; padding: 0; }
+.filter-container form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 0; }
 .filter-container input, .filter-container select { flex-grow: 1; }
-
-/* Action buttons in tables */
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-.actions form {
-    margin: 0;
-}
-button.small {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-.header-actions {
-    margin-bottom: 1.5rem;
-    display: flex;
-    gap: 1rem;
-}
-/* Announcement Styling */
-.announcement-section {
-    margin-bottom: 2rem;
-}
-.announcement-section h4 {
-    color: var(--color-gray);
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-}
-.announcement-card {
-    background: linear-gradient(135deg, #2B2D42, #4A4E69);
-    color: var(--color-white);
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 10px rgba(43, 45, 66, 0.3);
-}
-.announcement-card p {
-    margin: 0;
-    font-size: 1.1rem;
-}
-.announcement-card small {
-    display: block;
-    margin-top: 0.75rem;
-    color: var(--color-gray);
-    opacity: 0.8;
-}
+.actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.actions form { margin: 0; }
+button.small { padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 500; }
+.header-actions { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; }
+.announcement-section { margin-bottom: 2rem; }
+.announcement-section h4 { color: var(--color-gray); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+.announcement-card { background: linear-gradient(135deg, #2B2D42, #4A4E69); color: var(--color-white); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 1rem; box-shadow: 0 4px 10px rgba(43, 45, 66, 0.3); }
+.announcement-card p { margin: 0; font-size: 1.1rem; }
+.announcement-card small { display: block; margin-top: 0.75rem; color: var(--color-gray); opacity: 0.8; }

@@ -26,23 +26,25 @@
   <div class="card">
     <h3>All Pending Leave Requests</h3>
     {% if pending_requests %}
-        <table>
-            <thead> <tr> <th>Employee Name</th> <th>Leave Dates</th> <th>Team Leader Info</th> <th>Actions</th> </tr> </thead>
-            <tbody>
-                {% for request in pending_requests %}
-                <tr>
-                    <td>{{ request.employee.name }}</td>
-                    <td>{{ request.start_date.strftime('%d-%b') }} to {{ request.end_date.strftime('%d-%b') }}</td>
-                    <td>{{ request.team_leader_name }} ({{ request.team_leader_mobile }})</td>
-                    <td class="actions">
-                        <a href="{{ url_for('view_letter', request_id=request.id) }}" target="_blank"><button class="small">View Letter</button></a>
-                        <a href="{{ url_for('respond_leave', request_id=request.id, action='approve') }}"><button class="small approve">Approve</button></a>
-                        <a href="{{ url_for('respond_leave', request_id=request.id, action='decline') }}"><button class="small decline">Decline</button></a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead> <tr> <th>Employee Name</th> <th>Leave Dates</th> <th>Team Leader Info</th> <th>Actions</th> </tr> </thead>
+                <tbody>
+                    {% for request in pending_requests %}
+                    <tr>
+                        <td>{{ request.employee.name }}</td>
+                        <td>{{ request.start_date.strftime('%d-%b') }} to {{ request.end_date.strftime('%d-%b') }}</td>
+                        <td>{{ request.team_leader_name }} ({{ request.team_leader_mobile }})</td>
+                        <td class="actions">
+                            <a href="{{ url_for('view_letter', request_id=request.id) }}" target="_blank"><button class="small">View Letter</button></a>
+                            <a href="{{ url_for('respond_leave', request_id=request.id, action='approve') }}"><button class="small approve">Approve</button></a>
+                            <a href="{{ url_for('respond_leave', request_id=request.id, action='decline') }}"><button class="small decline">Decline</button></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
         <p>There are no pending leave requests in the company.</p>
     {% endif %}
@@ -50,24 +52,26 @@
   <div class="card">
       <h3>Your Team Members</h3>
       {% if team_members %}
-          <table>
-              <thead> <tr> <th>Employee ID</th> <th>Name</th> <th>Email</th> <th>Actions</th> </tr> </thead>
-              <tbody>
-                  {% for employee in team_members %}
-                  <tr>
-                      <td>{{ employee.employee_id }}</td>
-                      <td>{{ employee.name }}</td>
-                      <td>{{ employee.email }}</td>
-                      <td class="actions">
-                          <a href="{{ url_for('edit_user', user_id=employee.id) }}"><button class="small">Edit</button></a>
-                          <form method="POST" action="{{ url_for('remove_user', user_id=employee.id) }}" onsubmit="return confirm('Are you sure you want to remove this employee?');">
-                              <button type="submit" class="small decline">Remove</button>
-                          </form>
-                      </td>
-                  </tr>
-                  {% endfor %}
-              </tbody>
-          </table>
+          <div class="table-responsive">
+              <table>
+                  <thead> <tr> <th>Employee ID</th> <th>Name</th> <th>Email</th> <th>Actions</th> </tr> </thead>
+                  <tbody>
+                      {% for employee in team_members %}
+                      <tr>
+                          <td>{{ employee.employee_id }}</td>
+                          <td>{{ employee.name }}</td>
+                          <td>{{ employee.email }}</td>
+                          <td class="actions">
+                              <a href="{{ url_for('edit_user', user_id=employee.id) }}"><button class="small">Edit</button></a>
+                              <form method="POST" action="{{ url_for('remove_user', user_id=employee.id) }}" onsubmit="return confirm('Are you sure you want to remove this employee?');">
+                                  <button type="submit" class="small decline">Remove</button>
+                              </form>
+                          </td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
       {% else %}
           <p>You have no employees assigned to you yet.</p>
       {% endif %}

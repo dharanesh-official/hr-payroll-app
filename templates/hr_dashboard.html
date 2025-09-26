@@ -37,27 +37,29 @@
     </div>
     <h3>All Company Employees</h3>
     {% if all_employees %}
-      <table>
-        <thead> <tr> <th>Employee ID</th> <th>Name</th> <th>Role</th> <th>Supervisor</th> <th>Actions</th> </tr> </thead>
-        <tbody>
-          {% for employee in all_employees %}
-            <tr>
-              <td>{{ employee.employee_id }}</td>
-              <td>{{ employee.name }}</td>
-              <td>{{ employee.role | capitalize }}</td>
-              <td>{{ employee.supervisor.name if employee.supervisor else '-' }}</td>
-              <td class="actions">
-                <a href="{{ url_for('edit_user', user_id=employee.id) }}"><button class="small">Edit</button></a>
-                {% if employee.id != current_user.id %}
-                  <form method="POST" action="{{ url_for('remove_user', user_id=employee.id) }}" onsubmit="return confirm('Are you sure you want to remove this user?');">
-                    <button type="submit" class="small decline">Remove</button>
-                  </form>
-                {% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table>
+          <thead> <tr> <th>Employee ID</th> <th>Name</th> <th>Role</th> <th>Supervisor</th> <th>Actions</th> </tr> </thead>
+          <tbody>
+            {% for employee in all_employees %}
+              <tr>
+                <td>{{ employee.employee_id }}</td>
+                <td>{{ employee.name }}</td>
+                <td>{{ employee.role | capitalize }}</td>
+                <td>{{ employee.supervisor.name if employee.supervisor else '-' }}</td>
+                <td class="actions">
+                  <a href="{{ url_for('edit_user', user_id=employee.id) }}"><button class="small">Edit</button></a>
+                  {% if employee.id != current_user.id %}
+                    <form method="POST" action="{{ url_for('remove_user', user_id=employee.id) }}" onsubmit="return confirm('Are you sure you want to remove this user?');">
+                      <button type="submit" class="small decline">Remove</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     {% else %}
       <p>No employees found matching your criteria.</p>
     {% endif %}
