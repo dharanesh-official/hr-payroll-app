@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Your Payslip{% endblock %}
+
+{% block content %}
+  <h2>Payslip for {{ payslip.month_year }}</h2>
+  <div class="payslip-container">
+    <h3>Employee: {{ payslip.employee_name }}</h3>
+    
+    <table>
+        <tr>
+            <td>Gross Salary</td>
+            <td>₹{{ "%.2f"|format(payslip.gross_salary) }}</td>
+        </tr>
+        <tr>
+            <td>Total Payable Days in Month</td>
+            <td>{{ payslip.total_payable_days }}</td>
+        </tr>
+        <tr>
+            <td>Salary Per Day</td>
+            <td>₹{{ "%.2f"|format(payslip.per_day_salary) }}</td>
+        </tr>
+        <tr class="deduction-row">
+            <td>Deductible Leave Days Taken</td>
+            <td>{{ payslip.deductible_leave_days }}</td>
+        </tr>
+        <tr class="deduction-row">
+            <td><strong>Total Deductions</strong></td>
+            <td><strong>-₹{{ "%.2f"|format(payslip.deductions) }}</strong></td>
+        </tr>
+        <tr class="net-salary-row">
+            <td><strong>Net Salary Payable</strong></td>
+            <td><strong>₹{{ "%.2f"|format(payslip.net_salary) }}</strong></td>
+        </tr>
+    </table>
+    
+    {% if payslip.error %}
+        <p class="alert-error">{{ payslip.error }}</p>
+    {% endif %}
+  </div>
+{% endblock %}

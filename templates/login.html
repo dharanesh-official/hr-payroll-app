@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+  <div class="login-container">
+    <div class="login-form card">
+      <h2>Login to Your Account</h2>
+      <form method="post">
+        <div>
+          <label for="employee_id">Employee ID</label>
+          <input type="text" id="employee_id" name="employee_id" required>
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

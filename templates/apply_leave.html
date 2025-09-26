@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for Leave{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Leave Application Form</h2>
+
+  <form method="post">
+    <div>
+      <label for="leave_type">Type of Leave</label>
+      <select id="leave_type" name="leave_type" required>
+        <option value="Vacation">Vacation</option>
+        <option value="Sick">Sick Leave</option>
+        <option value="Personal">Personal Day</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <hr>
+    <div>
+      <label for="team">Your Team</label>
+      <input type="text" id="team" name="team" placeholder="e.g., Frontend Development" required>
+    </div>
+    <div>
+      <label for="project">Current Project</label>
+      <input type="text" id="project" name="project" placeholder="e.g., Customer Portal" required>
+    </div>
+    <div>
+      <label for="team_leader_name">Team Leader's Name</label>
+      <input type="text" id="team_leader_name" name="team_leader_name" required>
+    </div>
+    <div>
+      <label for="team_leader_mobile">Team Leader's Mobile Number</label>
+      <input type="text" id="team_leader_mobile" name="team_leader_mobile" required>
+    </div>
+    <hr>
+    <div>
+      <label for="start_date">Leave Start Date</label>
+      <input type="date" id="start_date" name="start_date" required>
+    </div>
+    <div>
+      <label for="end_date">Leave End Date</label>
+      <input type="date" id="end_date" name="end_date" required>
+    </div>
+    <div>
+      <label for="reason">Reason for Leave</label>
+      <textarea id="reason" name="reason" rows="4" required></textarea>
+    </div>
+    <button type="submit">Submit Request</button>
+  </form>
+</div>
+{% endblock %}

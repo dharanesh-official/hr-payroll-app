@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+  <h2>Analytics Dashboard</h2>
+  <p>Insights into company-wide leave and employee data.</p>
+
+  <div class="stat-card-container">
+    <div class="stat-card">
+        <h4>Total Employees</h4>
+        <p id="total-employees" class="stat-number">0</p>
+    </div>
+    <div class="stat-card">
+        <h4>On Leave Today</h4>
+        <p id="on-leave-today" class="stat-number">0</p>
+    </div>
+    <div class="stat-card">
+        <h4>Pending Requests</h4>
+        <p id="pending-requests" class="stat-number">0</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Leave Breakdown (Current Month)</h3>
+    <div class="chart-container" style="position: relative; height:350px; width:100%">
+        <canvas id="leaveTypeChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Monthly Leave Trend (Last 6 Months)</h3>
+    <div class="chart-container" style="position: relative; height:350px; width:100%">
+        <canvas id="leaveTrendChart"></canvas>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch the analytics data from our new API endpoint
+        fetch('/api/dashboard_stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+                // Update the stat cards
+                document.getElementById('total-employees').textContent = data.total_employees;
+                document.getElementById('on-leave-today').textContent = data.on_leave_today;
+                document.getElementById('pending-requests').textContent = data.pending_requests;
+
+                // --- Create the Pie Chart for Leave Types ---
+                const leaveTypeCtx = document.getElementById('leaveTypeChart').getContext('2d');
+                new Chart(leaveTypeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.leave_type_breakdown.labels,
+                        datasets: [{
+                            label: 'Leave Days',
+                            data: data.leave_type_breakdown.data,
+                            backgroundColor: [
+                                'rgba(217, 4, 41, 0.7)',
+                                'rgba(42, 157, 143, 0.7)',
+                                'rgba(231, 111, 81, 0.7)',
+                                'rgba(38, 70, 83, 0.7)'
+                            ],
+                            borderColor: '#FFFFFF',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right' }
+                        }
+                    }
+                });
+
+                // --- Create the Bar Chart for Leave Trends ---
+                const leaveTrendCtx = document.getElementById('leaveTrendChart').getContext('2d');
+                new Chart(leaveTrendCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.leave_trend.labels,
+                        datasets: [{
+                            label: 'Total Leave Days Taken',
+                            data: data.leave_trend.data,
+                            backgroundColor: 'rgba(217, 4, 41, 0.5)',
+                            borderColor: 'rgba(217, 4, 41, 1)',
+                            borderWidth: 1,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                             }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            });
+    });
+</script>
+{% endblock %}

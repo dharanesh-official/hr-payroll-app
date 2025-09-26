@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Leave Request Letter - {{ leave_request.employee.employee_id }}</title>
+    <style>
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            margin: 2cm;
+            font-size: 12pt;
+        }
+        p {
+            margin: 0 0 1em 0;
+        }
+        .header, .address-block, .signature-block {
+            margin-bottom: 2em;
+        }
+        .company-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.5em;
+        }
+        .document-title {
+            text-align: center;
+            font-size: 1.2em;
+            text-decoration: underline;
+            margin-bottom: 2em;
+        }
+        .subject {
+            font-weight: bold;
+            margin: 2em 0 1em 0;
+        }
+        .closing {
+            margin-top: 2em;
+        }
+        .signature {
+            margin-top: 3em;
+            border-top: 1px solid #333;
+            width: 250px;
+            padding-top: 5px;
+        }
+        .no-print {
+            text-align: center;
+            margin-top: 3em;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+        button {
+            background-color: #D90429;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif; /* Use a sans-serif font for the button */
+        }
+        button:hover {
+            background-color: #EF233C;
+        }
+    </style>
+</head>
+<body>
+    <div class="company-name">Your Company Name</div>
+    <div class="document-title">Leave of Absence Request</div>
+
+    <div class="header">
+        <p><strong>From:</strong></p>
+        <p>{{ leave_request.employee.name }} (ID: {{ leave_request.employee.employee_id }})</p>
+        <p>{{ leave_request.employee.email }}</p>
+    </div>
+
+    <div class="header">
+        <p><strong>Date:</strong> {{ today_date }}</p>
+    </div>
+
+    <div class="address-block">
+        <p><strong>To:</strong></p>
+        <p>The Supervisor / HR Department</p>
+    </div>
+
+    <p class="subject">Subject: Formal Request for Leave of Absence</p>
+
+    <p>Dear Sir/Madam,</p>
+
+    <p>This letter is a formal request for a leave of absence for a total of <strong>{{ total_days }} day(s)</strong>, from <strong>{{ leave_request.start_date.strftime('%A, %d %B %Y') }}</strong> to <strong>{{ leave_request.end_date.strftime('%A, %d %B %Y') }}</strong>, both dates inclusive.</p>
+    
+    <p>The reason for this leave request is: <em>{{ leave_request.reason }}</em>.</p>
+    
+    <p>During my absence, my responsibilities will be managed in coordination with my team. Further details are provided below:</p>
+    <ul>
+        <li><strong>Team:</strong> {{ leave_request.team }}</li>
+        <li><strong>Project:</strong> {{ leave_request.project }}</li>
+        <li><strong>Acting Team Leader:</strong> {{ leave_request.team_leader_name }} ({{ leave_request.team_leader_mobile }})</li>
+    </ul>
+    
+    <p>I will ensure a smooth handover of all my duties and will be reachable at {{ leave_request.employee.phone_number }} for any urgent matters. I kindly request you to approve my leave for the aforementioned period.</p>
+    
+    <p>Thank you for your consideration.</p>
+
+    <div class="closing">
+        <p>Sincerely,</p>
+    </div>
+
+    <div class="signature">
+        <p>{{ leave_request.employee.name }}</p>
+    </div>
+
+    <div class="no-print">
+        <a href="{{ url_for('download_letter', request_id=leave_request.id) }}">
+            <button>Download as PDF</button>
+        </a>
+    </div>
+</body>
+</html>

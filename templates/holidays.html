@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Holidays{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Manage Company & Government Holidays</h2>
+  
+  <h3>Add a New Holiday or Event</h3>
+  <form method="post" action="{{ url_for('holidays') }}">
+    <div>
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" required>
+    </div>
+    <div>
+      <label for="name">Holiday Name (e.g., New Year's Day)</label>
+      <input type="text" id="name" name="name" required>
+    </div>
+    <div>
+        <label for="type">Type</label>
+        <select id="type" name="type" required>
+            <option value="government">Government Holiday</option>
+            <option value="company_event">Company Event / Leave</option>
+        </select>
+    </div>
+    <button type="submit">Add Holiday</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Upcoming Holidays & Events</h3>
+  {% if holidays %}
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for holiday in holidays %}
+          <tr>
+            <td>{{ holiday.date.strftime('%d-%b-%Y') }}</td>
+            <td>{{ holiday.name }}</td>
+            <td>
+                {% if holiday.type %}
+                    {{ holiday.type.replace('_', ' ') | capitalize }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td class="actions">
+              <form method="POST" action="{{ url_for('delete_holiday', holiday_id=holiday.id) }}" onsubmit="return confirm('Are you sure you want to delete this event?');">
+                <button type="submit" class="small decline">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>There are no upcoming holidays scheduled.</p>
+  {% endif %}
+</div>
+{% endblock %}

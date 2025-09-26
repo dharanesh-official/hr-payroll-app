@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Payslip History{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Your Payslip History</h2>
+  <p>Showing all payslips generated since your date of joining.</p>
+  
+  {% if payslip_history %}
+    <table>
+      <thead>
+        <tr>
+          <th>Month & Year</th>
+          <th>Gross Salary</th>
+          <th>Total Deductions</th>
+          <th>Net Salary Paid</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payslip in payslip_history %}
+          <tr>
+            <td>{{ payslip.month_year }}</td>
+            <td>₹{{ "%.2f"|format(payslip.gross_salary) }}</td>
+            <td>-₹{{ "%.2f"|format(payslip.deductions) }}</td>
+            <td><strong>₹{{ "%.2f"|format(payslip.net_salary) }}</strong></td>
+            <td class="actions">
+                <a href="{{ url_for('view_payslip', year=payslip.year, month=payslip.month) }}">
+                    <button class="small">View Details</button>
+                </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No payslip history found.</p>
+  {% endif %}
+</div>
+{% endblock %}

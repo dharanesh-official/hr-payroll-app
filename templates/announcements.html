@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Announcements{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>Post a New Company-Wide Announcement</h2>
+  <p>This message will appear on the dashboard of all employees.</p>
+  <form method="post" action="{{ url_for('manage_announcements') }}">
+    <div>
+      <label for="content">Announcement Message</label>
+      <textarea id="content" name="content" rows="4" required></textarea>
+    </div>
+    <button type="submit">Post Announcement</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Recent Announcements</h3>
+  {% if announcements %}
+    <table>
+      <thead>
+        <tr>
+          <th>Message</th>
+          <th>Posted By</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for announcement in announcements %}
+          <tr>
+            <td>{{ announcement.content }}</td>
+            <td>{{ announcement.author.name }}</td>
+            <td>{{ announcement.timestamp.strftime('%d-%b-%Y %I:%M %p') }}</td>
+            <td class="actions">
+              <form method="POST" action="{{ url_for('delete_announcement', announcement_id=announcement.id) }}" onsubmit="return confirm('Are you sure you want to delete this announcement?');">
+                <button type="submit" class="small decline">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No announcements have been posted yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

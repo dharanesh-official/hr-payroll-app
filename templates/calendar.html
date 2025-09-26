@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Company Calendar{% endblock %}
+
+{% block content %}
+  <h2>Company Calendar</h2>
+  <p>This calendar shows approved leave, holidays, and your personal tasks.</p>
+
+  <div class="calendar-container">
+      <div id="calendar"></div>
+  </div>
+
+  <hr>
+
+  <h3>Add a Personal Task</h3>
+  <form method="post" action="{{ url_for('add_task') }}">
+    <div>
+      <label for="date">Date</label>
+      <input type="date" id="date" name="date" required>
+    </div>
+    <div>
+      <label for="task_description">Task Description</label>
+      <textarea id="task_description" name="task_description" rows="3" required></textarea>
+    </div>
+    <button type="submit">Add Task</button>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        // This is where the magic happens!
+        // The calendar will fetch events from our Flask API endpoint.
+        events: '/api/events'
+      });
+      calendar.render();
+    });
+  </script>
+{% endblock %}

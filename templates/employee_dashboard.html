@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard{% endblock %}
+
+{% block content %}
+  {% if announcements %}
+  <div class="announcement-section">
+      <h4>Company Announcements</h4>
+      {% for announcement in announcements %}
+          <div class="announcement-card">
+              <p>{{ announcement.content }}</p>
+              <small>Posted by {{ announcement.author.name }} on {{ announcement.timestamp.strftime('%d-%b-%Y') }}</small>
+          </div>
+      {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2>Welcome, {{ current_user.name }}!</h2>
+  
+  <div class="header-actions">
+    <a href="{{ url_for('apply_leave') }}"><button>Apply for Leave</button></a>
+    <a href="{{ url_for('view_payslip') }}"><button>View Current Payslip</button></a>
+    <a href="{{ url_for('payslip_history') }}"><button>Payslip History</button></a>
+  </div>
+
+  <div class="card">
+    <h3>Your Recent Leave History</h3>
+    {% if leave_requests %}
+      <table>
+        <thead> <tr> <th>Leave Type</th> <th>Start Date</th> <th>End Date</th> <th>Status</th> </tr> </thead>
+        <tbody>
+          {% for request in leave_requests %}
+            <tr class="status-{{ request.status | lower }}">
+              <td>{{ request.leave_type }}</td>
+              <td>{{ request.start_date.strftime('%d-%b-%Y') }}</td>
+              <td>{{ request.end_date.strftime('%d-%b-%Y') }}</td>
+              <td>{{ request.status }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>You have no leave requests.</p>
+    {% endif %}
+  </div>
+{% endblock %}

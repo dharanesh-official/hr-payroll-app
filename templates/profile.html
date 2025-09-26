@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+  <h2>User Profile & Settings</h2>
+
+  <div class="profile-info">
+      <p><strong>Name:</strong> {{ current_user.name }}</p>
+      <p><strong>Employee ID:</strong> {{ current_user.employee_id }}</p>
+      <p><strong>Role:</strong> {{ current_user.role | capitalize }}</p>
+  </div>
+
+  <hr>
+
+  <h3>Change Your Password</h3>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" action="{{ url_for('profile') }}">
+    <div>
+      <label for="current_password">Current Password</label>
+      <input type="password" id="current_password" name="current_password" required>
+    </div>
+    <div>
+      <label for="new_password">New Password</label>
+      <input type="password" id="new_password" name="new_password" required>
+    </div>
+    <div>
+      <label for="confirm_password">Confirm New Password</label>
+      <input type="password" id="confirm_password" name="confirm_password" required>
+    </div>
+    <button type="submit">Change Password</button>
+  </form>
+{% endblock %}

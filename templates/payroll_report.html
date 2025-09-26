@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll Report{% endblock %}
+
+{% block content %}
+  <h2>Company Payroll Report for {{ month_year }}</h2>
+  <p>This report shows the salary calculation for all employees for the current month.</p>
+
+  <div class="filter-container">
+      <form method="GET" action="{{ url_for('payroll_report') }}">
+          <input type="text" name="search" placeholder="Search by Name or ID..." value="{{ request.args.get('search', '') }}">
+          <select name="role">
+              <option value="">All Roles</option>
+              <option value="employee" {% if request.args.get('role') == 'employee' %}selected{% endif %}>Employee</option>
+              <option value="supervisor" {% if request.args.get('role') == 'supervisor' %}selected{% endif %}>Supervisor</option>
+              <option value="hr" {% if request.args.get('role') == 'hr' %}selected{% endif %}>HR</option>
+          </select>
+          <button type="submit">Filter</button>
+      </form>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Employee Name</th>
+          <th>Gross Salary</th>
+          <th>Leave Days Taken</th>
+          <th>Total Deductions</th>
+          <th><strong>Net Payable Salary</strong></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in payroll_data %}
+          <tr>
+            <td>{{ report.employee_id }}</td>
+            <td>{{ report.employee_name }}</td>
+            <td>₹{{ "%.2f"|format(report.gross_salary) }}</td>
+            <td>{{ report.deductible_leave_days }}</td>
+            <td>-₹{{ "%.2f"|format(report.deductions) }}</td>
+            <td><strong>₹{{ "%.2f"|format(report.net_salary) }}</strong></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
