@@ -12,14 +12,13 @@ import pandas as pd
 # --- App and Database Configuration ---
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
-# Use environment variable for secret key for production, with a fallback for development
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_that_should_be_changed')
 
-# Database path that works for both local development and Render's persistent disk
-db_path = os.path.join(os.environ.get('RENDER_DISK_PATH', basedir), 'database.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# ## THIS IS THE UPDATED LINE FOR HOSTING ##
+# It tells the app to use the DATABASE_URL from the hosting environment (like Render).
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -379,6 +378,31 @@ def dashboard_stats():
         data.append(monthly_leaves)
     leave_trend = {'labels': labels, 'data': data}
     return jsonify({'total_employees': total_employees, 'on_leave_today': on_leave_today, 'pending_requests': pending_requests, 'leave_type_breakdown': leave_type_breakdown, 'leave_trend': leave_trend})
+
+@app.route('/announcements', methods=['GET', 'POST'])
+@login_required
+def manage_announcements():
+    if current_user.role != 'hr':
+        flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            announcement = Announcement(content=content, user_id=current_user.id)
+            db.session.add(announcement); db.session.commit()
+            flash('Announcement posted!', 'success')
+        return redirect(url_for('manage_announcements'))
+    announcements = Announcement.query.order_by(Announcement.timestamp.desc()).all()
+    return render_template('announcements.html', announcements=announcements)
+
+@app.route('/announcements/delete/<int:announcement_id>', methods=['POST'])
+@login_required
+def delete_announcement(announcement_id):
+    if current_user.role != 'hr':
+        flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
+    announcement = Announcement.query.get_or_404(announcement_id)
+    db.session.delete(announcement); db.session.commit()
+    flash('Announcement deleted.', 'success')
+    return redirect(url_for('manage_announcements'))
 
 @app.cli.command("init-db")
 def init_db_command():
