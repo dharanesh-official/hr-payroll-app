@@ -73,19 +73,7 @@ class Announcement(db.Model):
 from payroll import calculate_payslip
 MAIN_SUPERVISOR_ID = 'MAIN_SUPERVISOR'
 
-# ## NEW ## - TEMPORARY DATABASE SETUP SCRIPT FOR DEPLOYMENT
-# This script runs once when the app starts to create tables and admins.
-with app.app_context():
-    db.create_all()
-    if not User.query.filter_by(employee_id='HR001').first():
-        hr_user = User(employee_id='HR001', name='HR Admin', email='hr@company.com', date_of_joining=datetime.utcnow().date(), salary=80000, role='hr')
-        hr_user.set_password('hr_password')
-        db.session.add(hr_user)
-        supervisor_user = User(employee_id='MAIN_SUPERVISOR', name='Main Supervisor', email='supervisor@company.com', date_of_joining=datetime.utcnow().date(), salary=90000, role='supervisor')
-        supervisor_user.set_password('supervisor_password')
-        db.session.add(supervisor_user)
-        db.session.commit()
-        print("Database tables created and admin users seeded.")
+
 
 # --- All Routes and Functions ---
 @login_manager.user_loader
