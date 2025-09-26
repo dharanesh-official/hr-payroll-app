@@ -12,20 +12,13 @@ import pandas as pd
 # --- App and Database Configuration ---
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_that_should_be_changed')
-
-# ## THIS IS THE UPDATED LINE FOR HOSTING ##
-# It tells the app to use the DATABASE_URL from the hosting environment (like Render).
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_that_should_be_changed_in_production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(basedir, "database.db")}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
+# ## MODIFIED ## - The new login portal page
 login_manager.login_view = 'login'
-
-from payroll import calculate_payslip
-
-MAIN_SUPERVISOR_ID = 'MAIN_SUPERVISOR'
 
 # --- Database Models ---
 class User(db.Model, UserMixin):
@@ -76,6 +69,23 @@ class Announcement(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+from payroll import calculate_payslip
+MAIN_SUPERVISOR_ID = 'MAIN_SUPERVISOR'
+
+# ## NEW ## - TEMPORARY DATABASE SETUP SCRIPT FOR DEPLOYMENT
+# This script runs once when the app starts to create tables and admins.
+with app.app_context():
+    db.create_all()
+    if not User.query.filter_by(employee_id='HR001').first():
+        hr_user = User(employee_id='HR001', name='HR Admin', email='hr@company.com', date_of_joining=datetime.utcnow().date(), salary=80000, role='hr')
+        hr_user.set_password('hr_password')
+        db.session.add(hr_user)
+        supervisor_user = User(employee_id='MAIN_SUPERVISOR', name='Main Supervisor', email='supervisor@company.com', date_of_joining=datetime.utcnow().date(), salary=90000, role='supervisor')
+        supervisor_user.set_password('supervisor_password')
+        db.session.add(supervisor_user)
+        db.session.commit()
+        print("Database tables created and admin users seeded.")
 
 # --- All Routes and Functions ---
 @login_manager.user_loader
@@ -84,15 +94,30 @@ def load_user(user_id): return User.query.get(int(user_id))
 @app.route('/')
 def index(): return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+# ## NEW ## - Login Routes for each role
+@app.route('/login', methods=['GET'])
 def login():
     if current_user.is_authenticated: return redirect(url_for('dashboard'))
+    return render_template('login_selection.html')
+
+def handle_login(role):
+    if current_user.is_authenticated: return redirect(url_for('dashboard'))
     if request.method == 'POST':
-        user = User.query.filter_by(employee_id=request.form['employee_id']).first()
+        user = User.query.filter_by(employee_id=request.form['employee_id'], role=role).first()
         if user and user.check_password(request.form['password']):
             login_user(user); return redirect(url_for('dashboard'))
-        else: flash('Invalid Employee ID or password.', 'error')
-    return render_template('login.html')
+        else: flash(f'Invalid ID or password for {role}.', 'error')
+    template = f'login_{role}.html'
+    return render_template(template)
+
+@app.route('/login/employee', methods=['GET', 'POST'])
+def login_employee(): return handle_login('employee')
+
+@app.route('/login/supervisor', methods=['GET', 'POST'])
+def login_supervisor(): return handle_login('supervisor')
+
+@app.route('/login/hr', methods=['GET', 'POST'])
+def login_hr(): return handle_login('hr')
 
 @app.route('/logout')
 @login_required
@@ -103,16 +128,14 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 @login_required
 def register():
+    # ... (rest of the routes are unchanged from the last full version)
     if current_user.role not in ['hr', 'supervisor']:
-        flash('You do not have permission to register users.', 'error'); return redirect(url_for('dashboard'))
+        flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
     supervisors = User.query.filter_by(role='supervisor').all()
     if request.method == 'POST':
         if User.query.filter_by(employee_id=request.form['employee_id']).first() or User.query.filter_by(email=request.form['email']).first():
             flash('Employee ID or email already exists.', 'error'); return redirect(url_for('register'))
-        if current_user.role == 'hr':
-            new_user_role = request.form.get('role', 'employee')
-        else:
-            new_user_role = 'employee'
+        new_user_role = 'employee' if current_user.role == 'supervisor' else request.form.get('role', 'employee')
         new_user = User(
             employee_id=request.form['employee_id'], name=request.form['name'], email=request.form['email'],
             phone_number=request.form['phone_number'], address=request.form['address'],
@@ -120,16 +143,13 @@ def register():
             salary=float(request.form['salary']), role=new_user_role
         )
         new_user.set_password(request.form['password'])
-        if current_user.role == 'supervisor':
-            new_user.supervisor_id = current_user.id
+        if current_user.role == 'supervisor': new_user.supervisor_id = current_user.id
         elif current_user.role == 'hr':
             supervisor_id = request.form.get('supervisor_id')
-            if supervisor_id:
-                new_user.supervisor_id = int(supervisor_id)
+            if supervisor_id: new_user.supervisor_id = int(supervisor_id)
         db.session.add(new_user); db.session.commit()
-        flash('New user registered successfully!', 'success'); return redirect(url_for('dashboard'))
+        flash('New user registered!', 'success'); return redirect(url_for('dashboard'))
     return render_template('register.html', supervisors=supervisors)
-
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -155,7 +175,6 @@ def dashboard():
         all_employees = query.order_by(User.name).all()
         return render_template('hr_dashboard.html', all_employees=all_employees, announcements=announcements)
     else: return "<h1>Invalid Role</h1>"
-
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -168,7 +187,6 @@ def profile():
         current_user.set_password(new_password); db.session.commit()
         flash('Your password has been updated!', 'success'); return redirect(url_for('dashboard'))
     return render_template('profile.html')
-
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def edit_user(user_id):
@@ -185,7 +203,6 @@ def edit_user(user_id):
         db.session.commit()
         flash(f'Details for {user_to_edit.name} updated.', 'success'); return redirect(url_for('dashboard'))
     return render_template('edit_user.html', user_to_edit=user_to_edit, supervisors=supervisors)
-
 @app.route('/remove_user/<int:user_id>', methods=['POST'])
 @login_required
 def remove_user(user_id):
@@ -199,7 +216,6 @@ def remove_user(user_id):
     LeaveRequest.query.filter_by(user_id=user_to_remove.id).delete()
     db.session.delete(user_to_remove); db.session.commit()
     flash(f'User {user_to_remove.name} has been removed.', 'success'); return redirect(url_for('dashboard'))
-
 @app.route('/apply_leave', methods=['GET', 'POST'])
 @login_required
 def apply_leave():
@@ -216,7 +232,6 @@ def apply_leave():
         db.session.add(new_request); db.session.commit()
         flash('Leave request submitted!', 'success'); return redirect(url_for('dashboard'))
     return render_template('apply_leave.html')
-
 @app.route('/respond_leave/<int:request_id>/<action>')
 @login_required
 def respond_leave(request_id, action):
@@ -230,7 +245,6 @@ def respond_leave(request_id, action):
     elif action == 'decline':
         leave_request.status = 'Declined'; flash(f"Leave for {leave_request.employee.name} declined.", 'error')
     db.session.commit(); return redirect(url_for('dashboard'))
-
 @app.route('/holidays', methods=['GET', 'POST'])
 @login_required
 def holidays():
@@ -241,7 +255,6 @@ def holidays():
         flash('Holiday added!', 'success'); return redirect(url_for('holidays'))
     upcoming_holidays = Holiday.query.filter(Holiday.date >= datetime.today()).order_by(Holiday.date).all()
     return render_template('holidays.html', holidays=upcoming_holidays)
-
 @app.route('/holidays/delete/<int:holiday_id>', methods=['POST'])
 @login_required
 def delete_holiday(holiday_id):
@@ -249,7 +262,6 @@ def delete_holiday(holiday_id):
     holiday = Holiday.query.get_or_404(holiday_id)
     db.session.delete(holiday); db.session.commit()
     flash('Holiday deleted.', 'success'); return redirect(url_for('holidays'))
-
 @app.route('/payslip')
 @login_required
 def view_payslip():
@@ -257,7 +269,6 @@ def view_payslip():
     year = request.args.get('year', today.year, type=int); month = request.args.get('month', today.month, type=int)
     payslip_data = calculate_payslip(current_user, year, month, db, Holiday, LeaveRequest)
     return render_template('payslip.html', payslip=payslip_data)
-
 @app.route('/payslip_history')
 @login_required
 def payslip_history():
@@ -269,7 +280,6 @@ def payslip_history():
         payslip['year'] = dt.year; payslip['month'] = dt.month
         payslips.append(payslip)
     return render_template('payslip_history.html', payslip_history=payslips)
-
 @app.route('/payroll_report')
 @login_required
 def payroll_report():
@@ -287,18 +297,15 @@ def payroll_report():
         payroll_data.append(payslip)
     month_year = today.strftime("%B %Y")
     return render_template('payroll_report.html', payroll_data=payroll_data, month_year=month_year)
-
 @app.route('/calendar')
 @login_required
 def view_calendar(): return render_template('calendar.html')
-
 @app.route('/add_task', methods=['POST'])
 @login_required
 def add_task():
     new_task = PersonalTask(user_id=current_user.id, date=datetime.strptime(request.form['date'], '%Y-%m-%d').date(), task_description=request.form['task_description'])
     db.session.add(new_task); db.session.commit()
     flash('Task added!', 'success'); return redirect(url_for('view_calendar'))
-
 @app.route('/api/events')
 @login_required
 def api_events():
@@ -325,7 +332,6 @@ def api_events():
     tasks = PersonalTask.query.filter_by(user_id=current_user.id).all()
     for t in tasks: events.append({'title': t.task_description, 'start': t.date.isoformat(), 'allDay': True, 'backgroundColor': '#264653', 'borderColor': '#264653'})
     return jsonify(events)
-
 @app.route('/view_letter/<int:request_id>')
 @login_required
 def view_letter(request_id):
@@ -334,7 +340,6 @@ def view_letter(request_id):
         flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
     today_date = datetime.today().strftime('%d-%b-%Y'); total_days = (leave_request.end_date - leave_request.start_date).days + 1
     return render_template('view_letter.html', leave_request=leave_request, today_date=today_date, total_days=total_days)
-
 @app.route('/download_letter/<int:request_id>')
 @login_required
 def download_letter(request_id):
@@ -345,14 +350,12 @@ def download_letter(request_id):
     html = render_template('view_letter.html', leave_request=leave_request, today_date=today_date, total_days=total_days)
     pdf = HTML(string=html).write_pdf()
     return Response(pdf, mimetype='application/pdf', headers={'Content-Disposition': f'attachment;filename=leave_request_{leave_request.employee.employee_id}.pdf'})
-
 @app.route('/analytics')
 @login_required
 def analytics_dashboard():
     if current_user.role not in ['hr', 'supervisor']:
         flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
     return render_template('analytics_dashboard.html')
-
 @app.route('/api/dashboard_stats')
 @login_required
 def dashboard_stats():
@@ -378,7 +381,6 @@ def dashboard_stats():
         data.append(monthly_leaves)
     leave_trend = {'labels': labels, 'data': data}
     return jsonify({'total_employees': total_employees, 'on_leave_today': on_leave_today, 'pending_requests': pending_requests, 'leave_type_breakdown': leave_type_breakdown, 'leave_trend': leave_trend})
-
 @app.route('/announcements', methods=['GET', 'POST'])
 @login_required
 def manage_announcements():
@@ -393,7 +395,6 @@ def manage_announcements():
         return redirect(url_for('manage_announcements'))
     announcements = Announcement.query.order_by(Announcement.timestamp.desc()).all()
     return render_template('announcements.html', announcements=announcements)
-
 @app.route('/announcements/delete/<int:announcement_id>', methods=['POST'])
 @login_required
 def delete_announcement(announcement_id):
@@ -406,6 +407,5 @@ def delete_announcement(announcement_id):
 
 @app.cli.command("init-db")
 def init_db_command():
-    """Clears the existing data and creates new tables."""
     db.create_all()
     print("Initialized the database.")

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Select Your Role{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-form card" style="text-align: center;">
+        <h2>Welcome to HR Pro</h2>
+        <p style="margin-bottom: 2rem; color: var(--color-gray);">Please select your role to log in.</p>
+        <div class="role-selection">
+            <a href="{{ url_for('login_employee') }}"><button class="role-button">Employee</button></a>
+            <a href="{{ url_for('login_supervisor') }}"><button class="role-button">Supervisor</button></a>
+            <a href="{{ url_for('login_hr') }}"><button class="role-button">HR Admin</button></a>
+        </div>
+    </div>
+</div>
+{% endblock %}
