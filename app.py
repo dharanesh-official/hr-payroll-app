@@ -8,11 +8,6 @@ from sqlalchemy import or_, func
 from weasyprint import HTML
 import calendar
 import pandas as pd
-from flask_mail import Mail, Message
-from threading import Thread
-from dotenv import load_dotenv
-
-load_dotenv() # Load environment variables
 
 # --- App and Database Configuration ---
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -20,24 +15,12 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_that_should_be_changed_in_production')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{os.path.join(basedir, "database.db")}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# --- Email Configuration ---
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
-mail = Mail(app)
-
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
+# ## MODIFIED ## - The new login portal page
 login_manager.login_view = 'login'
 
-from payroll import calculate_payslip
-MAIN_SUPERVISOR_ID = 'MAIN_SUPERVISOR'
-
-# (Database Models are unchanged)
+# --- Database Models ---
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.String(50), unique=True, nullable=False)
@@ -87,26 +70,24 @@ class Announcement(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     
-# --- Email Sending Function ---
-def send_async_email(app, msg):
-    with app.app_context():
-        mail.send(msg)
+from payroll import calculate_payslip
+MAIN_SUPERVISOR_ID = 'MAIN_SUPERVISOR'
 
-def send_email(to, subject, template, **kwargs):
-    msg = Message(subject, recipients=[to])
-    msg.html = render_template(template, **kwargs)
-    Thread(target=send_async_email, args=(app, msg)).start()
+
 
 # --- All Routes and Functions ---
-# (Most routes are unchanged, but have email sending added)
 @login_manager.user_loader
 def load_user(user_id): return User.query.get(int(user_id))
+
 @app.route('/')
 def index(): return render_template('index.html')
+
+# ## NEW ## - Login Routes for each role
 @app.route('/login', methods=['GET'])
 def login():
     if current_user.is_authenticated: return redirect(url_for('dashboard'))
     return render_template('login_selection.html')
+
 def handle_login(role):
     if current_user.is_authenticated: return redirect(url_for('dashboard'))
     if request.method == 'POST':
@@ -116,20 +97,26 @@ def handle_login(role):
         else: flash(f'Invalid ID or password for {role}.', 'error')
     template = f'login_{role}.html'
     return render_template(template)
+
 @app.route('/login/employee', methods=['GET', 'POST'])
 def login_employee(): return handle_login('employee')
+
 @app.route('/login/supervisor', methods=['GET', 'POST'])
 def login_supervisor(): return handle_login('supervisor')
+
 @app.route('/login/hr', methods=['GET', 'POST'])
 def login_hr(): return handle_login('hr')
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
 @app.route('/register', methods=['GET', 'POST'])
 @login_required
 def register():
+    # ... (rest of the routes are unchanged from the last full version)
     if current_user.role not in ['hr', 'supervisor']:
         flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
     supervisors = User.query.filter_by(role='supervisor').all()
@@ -231,11 +218,7 @@ def apply_leave():
             leave_type=request.form.get('leave_type')
         )
         db.session.add(new_request); db.session.commit()
-        flash('Leave request submitted!', 'success')
-        main_supervisor = User.query.filter_by(employee_id=MAIN_SUPERVISOR_ID).first()
-        if main_supervisor and main_supervisor.email:
-            send_email(main_supervisor.email, 'New Leave Request Submitted', 'email/new_leave_request.html', user=current_user, leave=new_request)
-        return redirect(url_for('dashboard'))
+        flash('Leave request submitted!', 'success'); return redirect(url_for('dashboard'))
     return render_template('apply_leave.html')
 @app.route('/respond_leave/<int:request_id>/<action>')
 @login_required
@@ -249,38 +232,7 @@ def respond_leave(request_id, action):
         leave_request.status = 'Approved'; flash(f"Leave for {leave_request.employee.name} approved.", 'success')
     elif action == 'decline':
         leave_request.status = 'Declined'; flash(f"Leave for {leave_request.employee.name} declined.", 'error')
-    db.session.commit()
-    employee_email = leave_request.employee.email
-    if employee_email:
-        send_email(employee_email, 'Update on Your Leave Request', 'email/leave_status_update.html', user=leave_request.employee, leave=leave_request)
-    return redirect(url_for('dashboard'))
-@app.route('/announcements', methods=['GET', 'POST'])
-@login_required
-def manage_announcements():
-    if current_user.role != 'hr':
-        flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        content = request.form.get('content')
-        if content:
-            announcement = Announcement(content=content, user_id=current_user.id)
-            db.session.add(announcement); db.session.commit()
-            flash('Announcement posted!', 'success')
-            all_users = User.query.all()
-            for user in all_users:
-                if user.email:
-                    send_email(user.email, 'New Company Announcement', 'email/new_announcement.html', announcement=announcement)
-        return redirect(url_for('manage_announcements'))
-    announcements = Announcement.query.order_by(Announcement.timestamp.desc()).all()
-    return render_template('announcements.html', announcements=announcements)
-@app.route('/announcements/delete/<int:announcement_id>', methods=['POST'])
-@login_required
-def delete_announcement(announcement_id):
-    if current_user.role != 'hr':
-        flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
-    announcement = Announcement.query.get_or_404(announcement_id)
-    db.session.delete(announcement); db.session.commit()
-    flash('Announcement deleted.', 'success')
-    return redirect(url_for('manage_announcements'))
+    db.session.commit(); return redirect(url_for('dashboard'))
 @app.route('/holidays', methods=['GET', 'POST'])
 @login_required
 def holidays():
@@ -417,6 +369,20 @@ def dashboard_stats():
         data.append(monthly_leaves)
     leave_trend = {'labels': labels, 'data': data}
     return jsonify({'total_employees': total_employees, 'on_leave_today': on_leave_today, 'pending_requests': pending_requests, 'leave_type_breakdown': leave_type_breakdown, 'leave_trend': leave_trend})
+@app.route('/announcements', methods=['GET', 'POST'])
+@login_required
+def manage_announcements():
+    if current_user.role != 'hr':
+        flash('You do not have permission.', 'error'); return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            announcement = Announcement(content=content, user_id=current_user.id)
+            db.session.add(announcement); db.session.commit()
+            flash('Announcement posted!', 'success')
+        return redirect(url_for('manage_announcements'))
+    announcements = Announcement.query.order_by(Announcement.timestamp.desc()).all()
+    return render_template('announcements.html', announcements=announcements)
 @app.route('/announcements/delete/<int:announcement_id>', methods=['POST'])
 @login_required
 def delete_announcement(announcement_id):
@@ -426,6 +392,7 @@ def delete_announcement(announcement_id):
     db.session.delete(announcement); db.session.commit()
     flash('Announcement deleted.', 'success')
     return redirect(url_for('manage_announcements'))
+
 @app.cli.command("init-db")
 def init_db_command():
     db.create_all()
