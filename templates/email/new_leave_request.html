@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>New Leave Request</title></head>
+<body>
+    <p>Dear Supervisor,</p>
+    <p>A new leave request has been submitted by <strong>{{ user.name }} (ID: {{ user.employee_id }})</strong> and is awaiting your approval.</p>
+    <p><strong>Leave Period:</strong> {{ leave.start_date.strftime('%d-%b-%Y') }} to {{ leave.end_date.strftime('%d-%b-%Y') }}</p>
+    <p><strong>Reason:</strong> {{ leave.reason }}</p>
+    <p>Please log in to the HR Pro portal to review this request.</p>
+    <br><p>Thank you,</p><p>HR Pro System</p>
+</body>
+</html>
